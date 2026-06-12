@@ -47,11 +47,18 @@ Explore systematically, and take a screenshot at each meaningful state — these
 
 Run the bundled accessibility script on each major page: paste the contents of [scripts/a11y-check.js](scripts/a11y-check.js) into the browser's JavaScript tool. It returns a JSON summary of programmatically detectable issues (missing alt text, unlabeled inputs, heading-order violations, low-contrast text, missing landmarks, vague link text, small tap targets). These are *candidates* — verify each before reporting it, because automated checks have false positives (e.g., decorative images legitimately have empty alt).
 
-Keep notes as you go: page, what you saw, screenshot filename. Save screenshots to a `ux-audit-<site>/screenshots/` folder next to where the report will go.
+Keep notes as you go: page, what you saw, screenshot filename. Save screenshots to a `ux-audit-<site>/screenshots/` folder next to where the report will go (if your browser tool can't save screenshots to disk, note that and rely on quoted/measured evidence instead).
 
-## Step 3: Evaluate against the four lenses
+**Save the evidence to disk as you collect it** — the lens subagents in Step 3 can't see your browser session, only files. Create `ux-audit-<site>/evidence/` containing:
 
-Read each reference file when you reach that lens — they contain the checklists and the common failure patterns to look for:
+- `observations.md` — your running notes: per page, what you saw, what you clicked, what happened (especially form error states, mobile behavior, anything broken or confusing). Be specific: quote on-screen text, record measurements. This is the subagents' primary source — a thin observations file means thin findings.
+- `page-<name>.txt` — the extracted text content of each audited page.
+- `a11y-<name>.json` — the a11y-check.js output for each audited page.
+- `scope.md` — the URL, pages covered, viewports tested, and anything you couldn't test (so subagents don't invent findings about things nobody observed).
+
+## Step 3: Evaluate the four lenses with parallel subagents
+
+Each lens has a reference file with its checklist and common failure patterns:
 
 | Lens | Reference | What it covers |
 |---|---|---|
@@ -60,7 +67,20 @@ Read each reference file when you reach that lens — they contain the checklist
 | Accessibility | [references/accessibility.md](references/accessibility.md) | WCAG 2.2 AA checklist organized by what you can actually verify |
 | UX writing | [references/ux-writing.md](references/ux-writing.md) | Clarity, tone, microcopy, error messages, CTAs, labels |
 
-Don't force findings into every category — a site can be genuinely fine in one lens. Equally, one observation can produce findings in multiple lenses (an error message that's both inaccessible and badly written); report it once under the most impactful lens and mention the other.
+If the Agent tool is available, spawn **four subagents in the same turn** — one per lens — so they run in parallel. Each gets the prompt template from [references/lens-agent-prompt.md](references/lens-agent-prompt.md) with the lens name, its reference file path, and the evidence folder path filled in. Each subagent reads only files (never the browser — the browser session is yours alone) and writes its findings to `evidence/findings-<lens>.json`.
+
+While the subagents run, do the verification work that needs the live browser: re-check anything from your notes you weren't sure about, and visit any page you skipped.
+
+If subagents aren't available or get denied, evaluate the lenses yourself inline — read each reference file in turn against your evidence. The output contract is identical either way.
+
+### Merging the four lens outputs
+
+You are the editor, not a stapler. When the subagents return:
+
+- **Dedupe across lenses.** The same observation often surfaces twice (a placeholder-only label is both an accessibility and a writing finding). Keep one finding under the most impactful lens, mention the other angle in its impact text.
+- **Re-calibrate priorities globally.** Each subagent rated severity seeing only its own lens; you've seen everything. A "Critical" writing nitpick next to a real keyboard trap needs demoting. Apply the Step 4 definitions across the merged set.
+- **Cut anything not grounded in the evidence files.** Subagents occasionally extrapolate beyond what was observed; if a finding cites evidence you can't trace to `observations.md`, a page text file, or an a11y scan, verify it in the browser or drop it.
+- **Renumber** findings F-01, F-02, … in final priority order.
 
 ## Step 4: Prioritize
 
