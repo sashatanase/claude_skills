@@ -69,6 +69,15 @@ Each lens has a reference file with its checklist and common failure patterns:
 
 If the Agent tool is available, spawn **four subagents in the same turn** — one per lens — so they run in parallel. Each gets the prompt template from [references/lens-agent-prompt.md](references/lens-agent-prompt.md) with the lens name, its reference file path, and the evidence folder path filled in. Each subagent reads only files (never the browser — the browser session is yours alone) and writes its findings to `evidence/findings-<lens>.json`.
 
+**Each lens must be a fresh, independent pair of eyes.** This holds whether the agents run in parallel or in cascade (one after another, e.g. when the environment limits concurrency):
+
+- Always spawn a **new** subagent per lens — never reuse one agent's session for a second lens, and never "continue" a previous agent with the next lens's prompt. A reused context carries the previous lens's conclusions into the next evaluation.
+- Never include another agent's findings, scores, or summary in a lens prompt — each agent gets the identical template, differing only in its lens slots.
+- Each agent's prompt explicitly forbids reading `findings-*.json` files; in cascade mode those files exist by the time later agents run, which is exactly when this rule earns its keep.
+- Keep `observations.md` descriptive, not evaluative: record what you saw and what happened ("submitting empty reloads the form with headings turned red, no error text"), not verdicts ("terrible accessibility fail"). Pre-judged notes bias every agent the same way and defeat the independence.
+
+The payoff comes at merge time: when two lenses independently converge on the same observation, treat that as corroboration — it raises your confidence in the finding's severity.
+
 While the subagents run, do the verification work that needs the live browser: re-check anything from your notes you weren't sure about, and visit any page you skipped.
 
 If subagents aren't available or get denied, evaluate the lenses yourself inline — read each reference file in turn against your evidence. The output contract is identical either way.

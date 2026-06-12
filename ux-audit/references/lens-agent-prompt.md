@@ -15,6 +15,10 @@ Sources (read in this order):
 Rules:
 - Work ONLY from the evidence files. You have no browser. If the evidence doesn't
   show it, it is not a finding — do not extrapolate from what sites "usually" do.
+- You are an INDEPENDENT reviewer. Do NOT read any findings-*.json files or any
+  other agent's output, even if present in the evidence folder. Your value is an
+  unbiased pair of eyes: if you reach the same conclusion as another lens, that
+  agreement only means something if you reached it alone.
 - Every finding needs concrete evidence: quote the text, cite the measurement,
   name the page. Generic advice that fits any website is worthless.
 - Stay in your lens. If you notice something for another lens, add it to the
