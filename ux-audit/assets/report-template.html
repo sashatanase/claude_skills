@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UX Audit — __SITE_NAME__</title>
+<style>
+  :root {
+    --critical: #d32f2f; --critical-bg: #fdecea;
+    --high: #e65100;     --high-bg: #fff3e0;
+    --medium: #f9a825;   --medium-bg: #fffde7;
+    --low: #2e7d32;      --low-bg: #e8f5e9;
+    --ink: #1a1a2e; --muted: #5f6b7a; --line: #e3e8ee; --bg: #f6f8fa; --card: #ffffff;
+    --accent: #3b5bdb;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.55; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 32px 20px 80px; }
+  header h1 { font-size: 28px; margin-bottom: 4px; }
+  header .meta { color: var(--muted); font-size: 14px; }
+  header .meta a { color: var(--accent); }
+  .section-title { font-size: 18px; margin: 36px 0 14px; }
+
+  .summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 20px; }
+  .scard { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; border-top: 4px solid var(--line); }
+  .scard .num { font-size: 30px; font-weight: 700; }
+  .scard .lbl { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .scard.critical { border-top-color: var(--critical); } .scard.critical .num { color: var(--critical); }
+  .scard.high { border-top-color: var(--high); } .scard.high .num { color: var(--high); }
+  .scard.medium { border-top-color: var(--medium); } .scard.medium .num { color: var(--medium); }
+  .scard.low { border-top-color: var(--low); } .scard.low .num { color: var(--low); }
+
+  .exec { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 20px 22px; }
+  .exec p + p { margin-top: 10px; }
+
+  .scores { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  .score { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .score .name { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px; }
+  .score .bar { background: var(--line); border-radius: 99px; height: 8px; overflow: hidden; }
+  .score .fill { height: 100%; border-radius: 99px; }
+  .score .val { font-weight: 700; margin-top: 6px; font-size: 14px; }
+
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; position: sticky; top: 0; background: var(--bg); padding: 12px 0; z-index: 5; }
+  .filters button { border: 1px solid var(--line); background: var(--card); border-radius: 99px; padding: 6px 14px; font-size: 13px; cursor: pointer; color: var(--ink); }
+  .filters button.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .filters .sep { width: 1px; background: var(--line); margin: 4px 4px; }
+
+  .finding { background: var(--card); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 14px; overflow: hidden; }
+  .finding summary { list-style: none; cursor: pointer; padding: 16px 18px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+  .finding summary::-webkit-details-marker { display: none; }
+  .finding summary:hover { background: #fafbfc; }
+  .fid { color: var(--muted); font-size: 13px; font-family: ui-monospace, monospace; }
+  .ftitle { font-weight: 600; flex: 1 1 300px; }
+  .badge { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; border-radius: 99px; padding: 3px 10px; white-space: nowrap; }
+  .badge.critical { color: var(--critical); background: var(--critical-bg); }
+  .badge.high { color: var(--high); background: var(--high-bg); }
+  .badge.medium { color: #8d6e00; background: var(--medium-bg); }
+  .badge.low { color: var(--low); background: var(--low-bg); }
+  .badge.cat { color: var(--muted); background: var(--bg); border: 1px solid var(--line); }
+  .fbody { padding: 0 18px 18px; border-top: 1px solid var(--line); }
+  .frow { margin-top: 14px; }
+  .frow .k { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 3px; }
+  .frow.rec { background: #f0f4ff; border: 1px solid #d6e0ff; border-radius: 8px; padding: 12px 14px; }
+  .frow.rec .k { color: var(--accent); }
+  .fmeta { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 14px; font-size: 13px; color: var(--muted); }
+  .finding img { max-width: 100%; border: 1px solid var(--line); border-radius: 8px; margin-top: 8px; }
+  .empty { text-align: center; color: var(--muted); padding: 40px 0; display: none; }
+  footer { margin-top: 48px; color: var(--muted); font-size: 13px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>UX Audit — __SITE_NAME__</h1>
+    <div class="meta">
+      <a href="__SITE_URL__">__SITE_URL__</a> · Audited __AUDIT_DATE__ · Scope: __AUDIT_SCOPE__
+    </div>
+    <div class="summary-cards" id="summaryCards"></div>
+  </header>
+
+  <h2 class="section-title">Executive summary</h2>
+  <div class="exec">__EXEC_SUMMARY__</div>
+
+  <h2 class="section-title">Scores by lens</h2>
+  <div class="scores" id="scores"></div>
+
+  <h2 class="section-title">Findings</h2>
+  <div class="filters" id="filters"></div>
+  <div id="findings"></div>
+  <div class="empty" id="empty">No findings match the selected filters.</div>
+
+  <footer>Generated by the ux-audit skill · Priorities: Critical = blocks a core task or excludes users · High = significantly hinders core tasks · Medium = friction · Low = polish</footer>
+</div>
+
+<script>
+const SCORES = __SCORES_JSON__;
+const FINDINGS = __FINDINGS_JSON__;
+
+const PRIORITIES = ["critical", "high", "medium", "low"];
+const CAT_LABELS = { heuristics: "UX Heuristics", usability: "Usability", accessibility: "Accessibility", writing: "UX Writing" };
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// Summary cards
+const counts = Object.fromEntries(PRIORITIES.map(p => [p, FINDINGS.filter(f => f.priority === p).length]));
+document.getElementById("summaryCards").innerHTML =
+  `<div class="scard"><div class="num">${FINDINGS.length}</div><div class="lbl">Total findings</div></div>` +
+  PRIORITIES.map(p => `<div class="scard ${p}"><div class="num">${counts[p]}</div><div class="lbl">${p}</div></div>`).join("");
+
+// Lens scores
+document.getElementById("scores").innerHTML = Object.entries(SCORES).map(([k, v]) => {
+  const color = v >= 8 ? "var(--low)" : v >= 6 ? "var(--medium)" : v >= 4 ? "var(--high)" : "var(--critical)";
+  return `<div class="score"><div class="name">${esc(CAT_LABELS[k] || k)}</div>
+    <div class="bar"><div class="fill" style="width:${v * 10}%;background:${color}"></div></div>
+    <div class="val">${v} / 10</div></div>`;
+}).join("");
+
+// Filters
+let activePriority = "all", activeCat = "all";
+const cats = [...new Set(FINDINGS.map(f => f.category))];
+const filtersEl = document.getElementById("filters");
+filtersEl.innerHTML =
+  `<button data-pri="all" class="active">All priorities</button>` +
+  PRIORITIES.filter(p => counts[p]).map(p => `<button data-pri="${p}">${p[0].toUpperCase() + p.slice(1)} (${counts[p]})</button>`).join("") +
+  `<div class="sep"></div><button data-cat="all" class="active">All lenses</button>` +
+  cats.map(c => `<button data-cat="${c}">${esc(CAT_LABELS[c] || c)}</button>`).join("");
+
+filtersEl.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.pri) { activePriority = b.dataset.pri; filtersEl.querySelectorAll("[data-pri]").forEach(x => x.classList.toggle("active", x === b)); }
+  if (b.dataset.cat) { activeCat = b.dataset.cat; filtersEl.querySelectorAll("[data-cat]").forEach(x => x.classList.toggle("active", x === b)); }
+  render();
+});
+
+// Findings
+const order = { critical: 0, high: 1, medium: 2, low: 3 };
+const effortOrder = { low: 0, medium: 1, high: 2 };
+FINDINGS.sort((a, b) => (order[a.priority] - order[b.priority]) || (effortOrder[a.effort] ?? 1) - (effortOrder[b.effort] ?? 1));
+
+function render() {
+  const shown = FINDINGS.filter(f =>
+    (activePriority === "all" || f.priority === activePriority) &&
+    (activeCat === "all" || f.category === activeCat));
+  document.getElementById("empty").style.display = shown.length ? "none" : "block";
+  document.getElementById("findings").innerHTML = shown.map(f => `
+    <details class="finding" ${f.priority === "critical" ? "open" : ""}>
+      <summary>
+        <span class="fid">${esc(f.id)}</span>
+        <span class="ftitle">${esc(f.title)}</span>
+        <span class="badge ${esc(f.priority)}">${esc(f.priority)}</span>
+        <span class="badge cat">${esc(CAT_LABELS[f.category] || f.category)}</span>
+      </summary>
+      <div class="fbody">
+        <div class="fmeta">
+          <span><b>Where:</b> ${esc(f.location)}</span>
+          <span><b>Principle:</b> ${esc(f.heuristic)}</span>
+          <span><b>Effort:</b> ${esc(f.effort)}</span>
+        </div>
+        <div class="frow"><div class="k">Evidence</div><div>${esc(f.evidence)}</div>
+          ${f.screenshot ? `<img src="${esc(f.screenshot)}" alt="Screenshot: ${esc(f.title)}" loading="lazy">` : ""}</div>
+        <div class="frow"><div class="k">Impact</div><div>${esc(f.impact)}</div></div>
+        <div class="frow rec"><div class="k">Recommendation</div><div>${esc(f.recommendation)}</div></div>
+      </div>
+    </details>`).join("");
+}
+render();
+</script>
+</body>
+</html>
